@@ -3,11 +3,11 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, MemoryRouter, NavLink, Navigate, Route, Routes, useNavigate } from "react-router-dom";
 import { Alerta, DEMO, Usuario, api, escuchar, sesion } from "./api";
 import Alertas from "./paginas/Alertas";
+import { titulo } from "./textos";
 import Camaras from "./paginas/Camaras";
 import Entrar from "./paginas/Entrar";
-import EstadisticasPagina from "./paginas/Estadisticas";
-import Registro from "./paginas/Registro";
-import Usuarios from "./paginas/Usuarios";
+import Ajustes from "./paginas/Ajustes";
+import Resumen from "./paginas/Estadisticas";
 import "./estilos.css";
 
 export type Evento = { tipo: string; nueva?: boolean; alerta?: Alerta };
@@ -41,7 +41,7 @@ function App() {
         setTimeout(() => setAviso(null), 6000);
         try {
           if ("Notification" in window && Notification.permission === "granted") {
-            new Notification("Vigilado · revisar", { body: `${msg.alerta.camara.nombre}: ${msg.alerta.titulo}` });
+            new Notification(titulo(msg.alerta), { body: msg.alerta.camara.nombre });
           }
         } catch { /* sin notificaciones del navegador */ }
       }
@@ -55,41 +55,36 @@ function App() {
   const propietario = yo.rol === "propietario";
   return (
     <div className={`app ${DEMO ? "con-demo" : ""}`}>
-      {DEMO && <div className="banda-demo">Demo con datos de ejemplo · los vídeos son simulaciones con esqueletos · cada ~25 s entra una alerta nueva</div>}
+      {DEMO && <div className="banda-demo">Demo con datos de ejemplo · cada 25 s llega una alerta nueva</div>}
       <aside className="lateral">
         <Marca />
         <nav>
           <NavLink to="/alertas">Alertas</NavLink>
           <NavLink to="/camaras">Cámaras</NavLink>
-          <NavLink to="/estadisticas">Estadísticas</NavLink>
-          {propietario && <NavLink to="/registro">Registro de accesos</NavLink>}
-          {propietario && <NavLink to="/usuarios">Usuarios</NavLink>}
+          <NavLink to="/resumen">Resumen</NavLink>
+          {propietario && <NavLink to="/ajustes">Ajustes</NavLink>}
         </nav>
         <div className="pie-lateral">
           <div className={`conexion ${conectado ? "si" : "no"}`}>
-            <i />{conectado ? "En directo" : "Reconectando…"}
+            <i />{conectado ? "Conectado" : "Reconectando…"}
           </div>
-          <div className="quien">
-            <strong>{yo.nombre}</strong>
-            <span>{yo.rol}</span>
-          </div>
+          <div className="quien"><strong>{yo.nombre}</strong></div>
           <button className="enlace" onClick={sesion.cerrar}>Cerrar sesión</button>
         </div>
       </aside>
       <main className="contenido">
         <Routes>
           <Route path="/alertas/:id?" element={<Alertas yo={yo} ultimo={ultimo} />} />
-          <Route path="/camaras" element={<Camaras yo={yo} ultimo={ultimo} />} />
-          <Route path="/estadisticas" element={<EstadisticasPagina ultimo={ultimo} />} />
-          {propietario && <Route path="/registro" element={<Registro />} />}
-          {propietario && <Route path="/usuarios" element={<Usuarios />} />}
+          <Route path="/camaras" element={<Camaras ultimo={ultimo} />} />
+          <Route path="/resumen" element={<Resumen ultimo={ultimo} />} />
+          {propietario && <Route path="/ajustes" element={<Ajustes />} />}
           <Route path="*" element={<Navigate to="/alertas" replace />} />
         </Routes>
       </main>
       {aviso && (
         <button className={`toast p-${aviso.prioridad}`} onClick={() => { ir(`/alertas/${aviso.id}`); setAviso(null); }}>
-          <b>Nueva alerta · {aviso.camara.nombre}</b>
-          <span>{aviso.titulo}</span>
+          <b>{titulo(aviso)}</b>
+          <span>{aviso.camara.nombre} · toca para ver el vídeo</span>
         </button>
       )}
     </div>
