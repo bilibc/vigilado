@@ -11,3 +11,4 @@ muestras/*
 config.yaml
 .env
 *.db
+dist-demo/

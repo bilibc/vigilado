@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter, NavLink, Navigate, Route, Routes } from "react-router-dom";
-import { Alerta, Usuario, api, escuchar, sesion } from "./api";
+import { BrowserRouter, MemoryRouter, NavLink, Navigate, Route, Routes, useNavigate } from "react-router-dom";
+import { Alerta, DEMO, Usuario, api, escuchar, sesion } from "./api";
 import Alertas from "./paginas/Alertas";
 import Camaras from "./paginas/Camaras";
 import Entrar from "./paginas/Entrar";
@@ -30,6 +30,7 @@ function App() {
   const [conectado, setConectado] = useState(false);
   const [ultimo, setUltimo] = useState<Evento | null>(null);
   const [aviso, setAviso] = useState<Alerta | null>(null);
+  const ir = useNavigate();
 
   useEffect(() => { api<Usuario>("/yo").then(setYo).catch(() => sesion.cerrar()); }, []);
   useEffect(() => {
@@ -38,18 +39,23 @@ function App() {
       if (msg.nueva && msg.alerta) {
         setAviso(msg.alerta);
         setTimeout(() => setAviso(null), 6000);
-        if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("Vigilado · revisar", { body: `${msg.alerta.camara.nombre}: ${msg.alerta.titulo}` });
-        }
+        try {
+          if ("Notification" in window && Notification.permission === "granted") {
+            new Notification("Vigilado · revisar", { body: `${msg.alerta.camara.nombre}: ${msg.alerta.titulo}` });
+          }
+        } catch { /* sin notificaciones del navegador */ }
       }
     }, setConectado);
   }, []);
-  useEffect(() => { if ("Notification" in window && Notification.permission === "default") Notification.requestPermission(); }, []);
+  useEffect(() => {
+    try { if (!DEMO && "Notification" in window && Notification.permission === "default") Notification.requestPermission(); } catch { /* */ }
+  }, []);
 
   if (!yo) return <div className="cargando">Cargando…</div>;
   const propietario = yo.rol === "propietario";
   return (
-    <div className="app">
+    <div className={`app ${DEMO ? "con-demo" : ""}`}>
+      {DEMO && <div className="banda-demo">Demo con datos de ejemplo · los vídeos son simulaciones con esqueletos · cada ~25 s entra una alerta nueva</div>}
       <aside className="lateral">
         <Marca />
         <nav>
@@ -81,10 +87,10 @@ function App() {
         </Routes>
       </main>
       {aviso && (
-        <a className={`toast p-${aviso.prioridad}`} href={`/alertas/${aviso.id}`}>
+        <button className={`toast p-${aviso.prioridad}`} onClick={() => { ir(`/alertas/${aviso.id}`); setAviso(null); }}>
           <b>Nueva alerta · {aviso.camara.nombre}</b>
           <span>{aviso.titulo}</span>
-        </a>
+        </button>
       )}
     </div>
   );
@@ -92,6 +98,7 @@ function App() {
 
 function Raiz() {
   const [token, setToken] = useState(sesion.token());
+  if (DEMO) return <MemoryRouter initialEntries={["/alertas"]}><App /></MemoryRouter>;
   if (!token) return <Entrar alEntrar={(t) => { sesion.guardar(t); setToken(t); }} />;
   return <BrowserRouter><App /></BrowserRouter>;
 }

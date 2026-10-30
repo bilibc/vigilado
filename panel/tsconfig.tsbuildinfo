@@ -1,1 +1,1 @@
-{"root":["./src/api.ts","./src/main.tsx","./src/paginas/Alertas.tsx","./src/paginas/Camaras.tsx","./src/paginas/Entrar.tsx","./src/paginas/Estadisticas.tsx","./src/paginas/Registro.tsx","./src/paginas/Usuarios.tsx"],"version":"5.9.3"}
+{"root":["./src/api.ts","./src/demo.ts","./src/main.tsx","./src/vite-env.d.ts","./src/paginas/Alertas.tsx","./src/paginas/Camaras.tsx","./src/paginas/Entrar.tsx","./src/paginas/Estadisticas.tsx","./src/paginas/Registro.tsx","./src/paginas/Usuarios.tsx"],"version":"5.9.3"}

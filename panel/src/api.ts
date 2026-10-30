@@ -1,4 +1,5 @@
 // Cliente de la API de Vigilado.
+export const DEMO = import.meta.env.VITE_DEMO === "1";
 
 export type Paso = { t: number; tipo: string; texto: string; datos?: Record<string, unknown> };
 export type Alerta = {
@@ -20,14 +21,16 @@ export type Estadisticas = {
 };
 
 const CLAVE = "vigilado.sesion";
+const leer = () => { try { return localStorage.getItem(CLAVE); } catch { return null; } };
 
 export const sesion = {
-  token: () => localStorage.getItem(CLAVE),
-  guardar: (t: string) => localStorage.setItem(CLAVE, t),
-  cerrar: () => { localStorage.removeItem(CLAVE); location.href = "/"; },
+  token: () => (DEMO ? "demo" : leer()),
+  guardar: (t: string) => { try { localStorage.setItem(CLAVE, t); } catch { /* sin almacenamiento */ } },
+  cerrar: () => { if (DEMO) return; try { localStorage.removeItem(CLAVE); } catch { /* */ } location.href = "/"; },
 };
 
 export async function api<T>(ruta: string, opciones: RequestInit = {}): Promise<T> {
+  if (DEMO) return (await import("./demo")).demoApi<T>(ruta, opciones);
   const r = await fetch(`/api/v1${ruta}`, {
     ...opciones,
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${sesion.token() ?? ""}`, ...(opciones.headers || {}) },
@@ -46,6 +49,11 @@ export const enlaceClip = (id: string) => api<{ url: string }>(`/alertas/${id}/e
 // WebSocket con reconexión automática
 export function escuchar(alRecibir: (msg: { tipo: string; nueva?: boolean; alerta?: Alerta }) => void,
                          alCambiarEstado: (conectado: boolean) => void) {
+  if (DEMO) {
+    let parar: (() => void) | undefined;
+    import("./demo").then((m) => { parar = m.demoEscuchar(alRecibir, alCambiarEstado); });
+    return () => parar?.();
+  }
   let ws: WebSocket | null = null;
   let cerrado = false;
   let espera = 1000;
