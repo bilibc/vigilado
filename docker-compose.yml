@@ -1,0 +1,28 @@
+# Vigilado completo en una máquina (pruebas y piloto).
+#   docker compose up -d db api                 → API + panel en http://localhost:8000
+#   docker compose run --rm api python -m app.sembrar --email tu@correo.es --clave "clave-larga"
+#   docker compose --profile tienda up -d edge  → motor de visión (necesita edge/config.yaml)
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: vigilado
+      POSTGRES_USER: vigilado
+      POSTGRES_PASSWORD: ${DB_CLAVE:-cambia-esta-clave}
+    volumes: ["db:/var/lib/postgresql/data"]
+  api:
+    build: { context: ., dockerfile: api/Dockerfile }
+    depends_on: [db]
+    environment:
+      DATABASE_URL: postgresql+psycopg://vigilado:${DB_CLAVE:-cambia-esta-clave}@db:5432/vigilado
+      VIGILADO_SECRETO: ${VIGILADO_SECRETO:?Define VIGILADO_SECRETO (64 caracteres aleatorios)}
+      VIGILADO_RETENCION_DIAS: ${VIGILADO_RETENCION_DIAS:-30}
+      VIGILADO_CORS: ""
+    volumes: ["clips:/datos/clips"]
+    ports: ["8000:8000"]
+  edge:
+    profiles: ["tienda"]
+    build: { context: edge }
+    volumes: ["./edge/config.yaml:/config/config.yaml:ro", "./muestras:/muestras:ro", "edge-datos:/edge/datos"]
+    network_mode: host   # para llegar a las cámaras de la red local
+volumes: { db: {}, clips: {}, edge-datos: {} }

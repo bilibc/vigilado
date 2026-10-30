@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+node_modules/
+panel/dist/
+datos/
+edge/datos/
+api/datos/
+muestras/*
+!muestras/LEEME.md
+config.yaml
+.env
+*.db

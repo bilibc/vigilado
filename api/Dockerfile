@@ -1,0 +1,17 @@
+# Imagen de la API con el panel ya compilado dentro.
+FROM node:20-alpine AS panel
+WORKDIR /panel
+COPY panel/package.json panel/package-lock.json ./
+RUN npm ci
+COPY panel/ ./
+RUN npm run build
+
+FROM python:3.12-slim
+WORKDIR /app
+COPY api/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+COPY api/app ./app
+COPY --from=panel /panel/dist /panel
+ENV VIGILADO_PANEL=/panel VIGILADO_CLIPS=/datos/clips
+EXPOSE 8000
+CMD ["uvicorn", "app.principal:app", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers"]

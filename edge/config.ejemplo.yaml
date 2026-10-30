@@ -1,0 +1,28 @@
+# Configuración del equipo de una tienda. Copiar a config.yaml y rellenar.
+tienda: Perfumería Centro
+api:
+  url: http://localhost:8000          # dirección de la API de Vigilado
+  token: PEGAR_AQUI_EL_TOKEN_DEL_EQUIPO  # lo da `python -m app.sembrar` o el panel
+modelo:
+  tipo: rtm            # rtm = modelo real (YOLOX + RTMPose) · reproduccion = poses guardadas (.jsonl)
+  modo: balanced       # lightweight | balanced | performance
+  dispositivo: cpu     # cpu | cuda (GPU NVIDIA con onnxruntime-gpu)
+fps_analisis: 10       # fotogramas por segundo que se analizan (no hace falta analizar los 25 de la cámara)
+clips:
+  carpeta: datos/clips
+  antes: 6             # segundos antes del gesto
+  despues: 4           # segundos después
+  difuminar_caras: false
+parametros: {}         # ajustes del analizador (ver Parametros en vigilado_edge/analizador.py)
+camaras:
+  - id: cam-perfumeria
+    nombre: Pasillo de perfumes
+    # Hikvision: rtsp://usuario:clave@192.168.1.64:554/Streaming/Channels/101
+    # Dahua:     rtsp://usuario:clave@192.168.1.108:554/cam/realmonitor?channel=1&subtype=0
+    # O un archivo de vídeo para probar:
+    fuente: ../muestras/vtest.avi
+    tiempo_real: false
+    zonas:             # coordenadas 0..1 sobre la imagen (usar `vigilado-edge captura` para sacar una imagen)
+      - {nombre: Estantería perfumes, tipo: estanteria, poligono: [[0.04, 0.24], [0.22, 0.24], [0.22, 0.62], [0.04, 0.62]]}
+      - {nombre: Caja, tipo: caja, poligono: [[0.0, 0.86], [0.12, 0.86], [0.12, 1.0], [0.0, 1.0]]}
+      - {nombre: Salida, tipo: salida, poligono: [[0.86, 0.86], [1.0, 0.86], [1.0, 1.0], [0.86, 1.0]]}

@@ -1,0 +1,16 @@
+# Simula una cámara IP: emite un vídeo en bucle por RTSP en rtsp://localhost:8554/tienda1
+# Uso:  docker compose -f tools/camara-prueba/docker-compose.yml up
+# Luego en edge/config.yaml:  fuente: rtsp://localhost:8554/tienda1
+services:
+  mediamtx:
+    image: bluenviron/mediamtx:1.9.3
+    ports: ["8554:8554"]
+  emisor:
+    image: jrottenberg/ffmpeg:6.1-ubuntu
+    depends_on: [mediamtx]
+    volumes: ["../../muestras:/muestras:ro"]
+    restart: unless-stopped
+    command: >
+      -re -stream_loop -1 -i /muestras/${VIDEO:-vtest.avi}
+      -an -c:v libx264 -preset veryfast -tune zerolatency -g 20
+      -f rtsp -rtsp_transport tcp rtsp://mediamtx:8554/tienda1
